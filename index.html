@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CPU Scheduler Simulator</title>
-    <link rel="stylesheet" href="Style/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CPU Scheduler Simulator</title>
+  <link rel="stylesheet" href="Style/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
 </head>
+
 <body>
   <div class="container">
     <h1>CPU Scheduler Simulator</h1>
@@ -27,8 +29,34 @@
     <div class="job-section" style="display:none;">
       <p>Timer: <span id="timer">0</span> sec</p>
       <button id="addJobButton">+ Add Job</button>
+      <button id="stopButton">■ Stop</button>
     </div>
+
+    <div class="queue-section">
+      <h2>Queues</h2>
+      <div class="queue-container">
+        <div class="queue" id="readyQueue">
+          <h3>Ready Queue</h3>
+          <ul id="readyList"></ul>
+        </div>
+        <div class="queue" id="processingQueue">
+          <h3>Processing</h3>
+          <ul id="processingList"></ul>
+        </div>
+        <div class="queue" id="completedQueue">
+          <h3>Completed</h3>
+          <ul id="completedList"></ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="gantt-section" style="display:none;">
+      <h2>Gantt Chart</h2>
+      <div id="ganttContainer" class="gantt-container"></div>
+    </div>
+
   </div>
-    <script src="Script/script.js"></script>
+  <script src="Script/script.js"></script>
 </body>
+
 </html>

@@ -119,3 +119,37 @@ button:hover:not(:disabled) {
   font-weight: 500;
   font-size: 0.95rem;
 }
+
+
+/* ─── GANTT CHART STYLES ───────────────────────────────── */
+
+.gantt-section {
+  margin-top: 3rem;
+  text-align: left;
+}
+
+.gantt-container {
+  background: #111;
+  padding: 1rem;
+  border-radius: 8px;
+  position: relative;
+}
+
+.gantt-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.gantt-label {
+  flex: 0 0 50px;
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+.gantt-bar {
+  height: 16px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #00e1ff, #c600ff);
+  box-shadow: 0 0 8px #00e1ff55;
+}
