@@ -5,8 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CPU Scheduler Simulator</title>
     <link rel="stylesheet" href="Style/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
+  <div class="container">
+    <h1>CPU Scheduler Simulator</h1>
+
+    <div class="setup-section">
+      <label for="algorithmSelect">Choose Scheduling Algorithm:</label>
+      <select id="algorithmSelect">
+        <option value="" disabled selected>Select an algorithm</option>
+        <option value="FCFS">First-Come First-Serve (FCFS)</option>
+        <option value="SJF">Shortest Job First (SJF)</option>
+        <option value="RR">Round Robin (RR)</option>
+        <option value="Priority">Priority Scheduling</option>
+      </select>
+
+      <button id="startButton">Start Timer</button>
+    </div>
+
+    <div class="job-section" style="display:none;">
+      <p>Timer: <span id="timer">0</span> sec</p>
+      <button id="addJobButton">+ Add Job</button>
+    </div>
+  </div>
     <script src="Script/script.js"></script>
 </body>
 </html>
