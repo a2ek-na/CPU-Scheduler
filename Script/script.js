@@ -122,10 +122,16 @@ function startProcessing() {
   const job = readyQueue.shift();
   isProcessing = true;
 
-  // Record start & end for Gantt
+  // Capture timing
   const startTime = timer;
   const endTime = startTime + job.burstTime;
-  jobLog.push({ id: job.id, start: startTime, end: endTime });
+  jobLog.push({
+    id: job.id,
+    burstTime: job.burstTime,
+    arrivalTime: job.arrivalTime,
+    startTime: startTime,
+    completionTime: endTime,
+  });
 
   // Update DOM
   document.getElementById('processingList').innerHTML =
@@ -161,30 +167,56 @@ document.getElementById('stopButton').addEventListener('click', () => {
 
 function renderGanttChart() {
   const container = document.getElementById('ganttContainer');
-  container.innerHTML = '';                   // clear if re-render
-  const totalTime = timer;                    // final time when stopped
+  const tableBody = document.querySelector('#jobTable tbody');
+  container.innerHTML = '';
+  tableBody.innerHTML = '';
 
-  jobLog.forEach(({ id, start, end }) => {
+  const totalTime = timer; // final timer value
+
+  jobLog.forEach(job => {
+    // 1) Gantt bar
     const row = document.createElement('div');
     row.className = 'gantt-row';
 
     const label = document.createElement('div');
     label.className = 'gantt-label';
-    label.textContent = id;
+    label.textContent = job.id;
 
     const bar = document.createElement('div');
     bar.className = 'gantt-bar';
-    // width & offset as percentages of totalTime
-    const widthPct = ((end - start) / totalTime) * 100;
-    const offsetPct = (start / totalTime) * 100;
+    const widthPct = ((job.completionTime - job.startTime) / totalTime) * 100;
+    const offsetPct = (job.startTime / totalTime) * 100;
     bar.style.width = `${widthPct}%`;
     bar.style.marginLeft = `${offsetPct}%`;
 
     row.appendChild(label);
     row.appendChild(bar);
     container.appendChild(row);
+
+    // 2) Stats table row
+    const tr = document.createElement('tr');
+
+    // Compute derived metrics
+    const turnaround = job.completionTime - job.arrivalTime;
+    const waiting = turnaround - job.burstTime;
+
+    [
+      job.id,
+      job.burstTime,
+      job.arrivalTime,
+      job.startTime,
+      job.completionTime,
+      turnaround,
+      waiting
+    ].forEach(val => {
+      const td = document.createElement('td');
+      td.textContent = val;
+      tr.appendChild(td);
+    });
+
+    tableBody.appendChild(tr);
   });
 
-  // show the section
+  // Show the section
   document.querySelector('.gantt-section').style.display = 'block';
 }

@@ -50,10 +50,33 @@
       </div>
     </div>
 
+    <!-- GANTT CHART SECTION -->
     <div class="gantt-section" style="display:none;">
       <h2>Gantt Chart</h2>
       <div id="ganttContainer" class="gantt-container"></div>
+
+      <!-- JOB STATS TABLE -->
+      <h2>Job Statistics</h2>
+      <div class="table-section">
+        <table id="jobTable">
+          <thead>
+            <tr>
+              <th>Job ID</th>
+              <th>Burst Time</th>
+              <th>Arrival Time</th>
+              <th>Start Time</th>
+              <th>Completion Time</th>
+              <th>Turnaround Time</th>
+              <th>Waiting Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- rows will be injected here -->
+          </tbody>
+        </table>
+      </div>
     </div>
+
 
   </div>
   <script src="Script/script.js"></script>

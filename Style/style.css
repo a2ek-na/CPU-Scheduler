@@ -153,3 +153,40 @@ button:hover:not(:disabled) {
   background: linear-gradient(90deg, #00e1ff, #c600ff);
   box-shadow: 0 0 8px #00e1ff55;
 }
+
+
+
+/* ─── JOB STATS TABLE STYLES ───────────────────────────────── */
+
+.table-section {
+  margin-top: 2rem;
+  overflow-x: auto;
+}
+
+#jobTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+#jobTable th,
+#jobTable td {
+  padding: 0.5rem;
+  border: 1px solid #333;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+#jobTable thead th {
+  background: #1a1a1a;
+  color: #00e1ff;
+  text-shadow: 0 0 5px #00e1ff66;
+}
+
+#jobTable tbody tr:nth-child(odd) {
+  background: rgba(255,255,255,0.03);
+}
+
+#jobTable tbody tr:hover {
+  background: rgba(0,255,255,0.1);
+}
