@@ -166,40 +166,56 @@ document.getElementById('stopButton').addEventListener('click', () => {
 });
 
 function renderGanttChart() {
-  const container = document.getElementById('ganttContainer');
-  const tableBody = document.querySelector('#jobTable tbody');
-  container.innerHTML = '';
-  tableBody.innerHTML = '';
+  const container     = document.getElementById('ganttContainer');
+  const tableBody     = document.querySelector('#jobTable tbody');
+  const avgTurnDOM    = document.getElementById('avgTurnaround');
+  const avgWaitDOM    = document.getElementById('avgWaiting');
+  const throughputDOM = document.getElementById('throughput');
 
-  const totalTime = timer; // final timer value
+  // Clear previous content
+  container.innerHTML  = '';
+  tableBody.innerHTML  = '';
+  avgTurnDOM.textContent    = '–';
+  avgWaitDOM.textContent    = '–';
+  throughputDOM.textContent = '–';
 
+  const totalTime = timer;    // total elapsed time when stopped
+  const nJobs     = jobLog.length;
+
+  let sumTurnaround = 0;
+  let sumWaiting    = 0;
+
+  // Build Gantt & Stats
   jobLog.forEach(job => {
-    // 1) Gantt bar
-    const row = document.createElement('div');
-    row.className = 'gantt-row';
+    // —— Gantt Bar —— 
+    const rowDiv = document.createElement('div');
+    rowDiv.className = 'gantt-row';
 
-    const label = document.createElement('div');
-    label.className = 'gantt-label';
-    label.textContent = job.id;
+    const labelDiv = document.createElement('div');
+    labelDiv.className = 'gantt-label';
+    labelDiv.textContent = job.id;
 
-    const bar = document.createElement('div');
-    bar.className = 'gantt-bar';
-    const widthPct = ((job.completionTime - job.startTime) / totalTime) * 100;
+    const barDiv = document.createElement('div');
+    barDiv.className = 'gantt-bar';
+    const widthPct  = ((job.completionTime - job.startTime) / totalTime) * 100;
     const offsetPct = (job.startTime / totalTime) * 100;
-    bar.style.width = `${widthPct}%`;
-    bar.style.marginLeft = `${offsetPct}%`;
+    barDiv.style.width      = `${widthPct}%`;
+    barDiv.style.marginLeft = `${offsetPct}%`;
 
-    row.appendChild(label);
-    row.appendChild(bar);
-    container.appendChild(row);
+    rowDiv.appendChild(labelDiv);
+    rowDiv.appendChild(barDiv);
+    container.appendChild(rowDiv);
 
-    // 2) Stats table row
+    // —— Stats Table Row —— 
     const tr = document.createElement('tr');
+    const turnaround    = job.completionTime - job.arrivalTime;
+    const waiting       = turnaround - job.burstTime;
 
-    // Compute derived metrics
-    const turnaround = job.completionTime - job.arrivalTime;
-    const waiting = turnaround - job.burstTime;
+    // accumulate for summary
+    sumTurnaround += turnaround;
+    sumWaiting    += waiting;
 
+    // create cells
     [
       job.id,
       job.burstTime,
@@ -208,15 +224,27 @@ function renderGanttChart() {
       job.completionTime,
       turnaround,
       waiting
-    ].forEach(val => {
+    ].forEach(value => {
       const td = document.createElement('td');
-      td.textContent = val;
+      td.textContent = value;
       tr.appendChild(td);
     });
 
     tableBody.appendChild(tr);
   });
 
-  // Show the section
+  // —— Summary Metrics —— 
+  if (nJobs > 0) {
+    const avgTurn = (sumTurnaround / nJobs).toFixed(2);
+    const avgWait = (sumWaiting / nJobs).toFixed(2);
+    const tput    = (nJobs / totalTime).toFixed(3);
+
+    avgTurnDOM.textContent    = avgTurn;
+    avgWaitDOM.textContent    = avgWait;
+    throughputDOM.textContent = tput;
+  }
+
+  // Reveal the whole Gantt & Stats section
   document.querySelector('.gantt-section').style.display = 'block';
 }
+

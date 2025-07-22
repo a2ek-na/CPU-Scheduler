@@ -190,3 +190,26 @@ button:hover:not(:disabled) {
 #jobTable tbody tr:hover {
   background: rgba(0,255,255,0.1);
 }
+
+
+/* ─── SUMMARY METRICS STYLES ───────────────────────────────── */
+
+.summary-metrics {
+  margin-top: 2rem;
+  background: rgba(20,20,20,0.8);
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,255,255,0.1);
+  color: #c0f7ff;
+}
+
+.summary-metrics h2 {
+  margin-top: 0;
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff88;
+}
+
+.summary-metrics p {
+  margin: 0.5rem 0;
+  font-size: 0.95rem;
+}
