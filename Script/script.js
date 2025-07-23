@@ -1,234 +1,182 @@
-console.log("CPU Scheduler Simulator Loaded…");
+// Script/script.js
 
-// ─── Global State ─────────────────────────────────────────
+console.log("CPU Scheduler Simulator Loaded");
+
 let selectedAlgorithm = null;
-let timer             = 0;
-let timerInterval     = null;
-let jobId             = 1;
-let isProcessing      = false;
-let stopRequested     = false;
+let timer = 0;
+let timerInterval = null;
+let jobCounter = 1;
+let processing = false;
+let stopped = false;
 
 const readyQueue = [];
-const jobLog     = []; // will store { id, burstTime, arrivalTime, startTime, completionTime }
+const jobLog = [];
 
-// ─── UI Elements ──────────────────────────────────────────
-const algoSelect   = document.getElementById('algorithmSelect');
-const startBtn     = document.getElementById('startButton');
-const addJobBtn    = document.getElementById('addJobButton');
-const stopBtn      = document.getElementById('stopButton');
-const timerDisplay = document.getElementById('timer');
-const readyListDOM = document.getElementById('readyList');
-const procListDOM  = document.getElementById('processingList');
-const compListDOM  = document.getElementById('completedList');
+const elems = {
+  algoSelect: document.getElementById('algorithmSelect'),
+  startBtn: document.getElementById('startButton'),
+  addBtn: document.getElementById('addJobButton'),
+  stopBtn: document.getElementById('stopButton'),
+  timerDisplay: document.getElementById('timer'),
+  readyList: document.getElementById('readyList'),
+  procList: document.getElementById('processingList'),
+  compList: document.getElementById('completedList'),
+  avgTurn: document.getElementById('avgTurnaround'),
+  avgWait: document.getElementById('avgWaiting'),
+  throughput: document.getElementById('throughput'),
+  ganttSection: document.querySelector('.gantt-section'),
+  ganttContainer: document.getElementById('ganttContainer'),
+  statsBody: document.querySelector('#jobTable tbody')
+};
 
-// Summary spans
-const avgTurnDOM    = document.getElementById('avgTurnaround');
-const avgWaitDOM    = document.getElementById('avgWaiting');
-const throughputDOM = document.getElementById('throughput');
-
-// ─── Start Timer & Lock In Algorithm ─────────────────────
-startBtn.addEventListener('click', () => {
-  const algo = algoSelect.value;
-  if (!algo) {
-    alert('Please select a scheduling algorithm!');
-    return;
-  }
+elems.startBtn.addEventListener('click', () => {
+  const algo = elems.algoSelect.value;
+  if (!algo) return alert('Select an algorithm first!');
   selectedAlgorithm = algo;
-  algoSelect.disabled = true;
-  startBtn.disabled   = true;
+  elems.algoSelect.disabled = true;
+  elems.startBtn.disabled = true;
   document.querySelector('.job-section').style.display = 'flex';
 
-  // Start the global timer
   timerInterval = setInterval(() => {
     timer++;
-    timerDisplay.innerText = timer;
+    elems.timerDisplay.textContent = timer;
   }, 1000);
 });
 
-// ─── Add Job Handler ──────────────────────────────────────
-addJobBtn.addEventListener('click', () => {
-  // Get burst time
-  const burst = prompt(`Enter Burst Time for Job J${jobId}`);
-  if (!burst || isNaN(burst) || burst <= 0) {
-    alert('Please enter a valid positive number for burst time.');
-    return;
-  }
-  const burstTime = parseInt(burst, 10);
-
-  // Get priority if needed
+elems.addBtn.addEventListener('click', () => {
+  const burst = parseInt(prompt(`Burst time for J${jobCounter}`), 10);
+  if (!burst || burst <= 0) return alert('Enter a positive number');
   let priority = null;
+
   if (selectedAlgorithm === 'Priority') {
-    const pr = prompt(`Enter Priority (lower = higher) for Job J${jobId}`);
-    if (pr === null || isNaN(pr)) {
-      alert('Invalid priority—job cancelled.');
-      return;
-    }
-    priority = parseInt(pr, 10);
+    const p = prompt(`Priority for J${jobCounter} (lower is higher)`);
+    priority = isNaN(p) ? null : parseInt(p, 10);
+    if (priority === null) return alert('Invalid priority');
   }
 
-  // Build job object
   const job = {
-    id:          'J' + jobId,
-    burstTime,
+    id: `J${jobCounter++}`,
+    burstTime: burst,
     arrivalTime: timer,
-    priority     // may be null for non-Priority algos
+    priority
   };
-  jobId++;
 
-  // Enqueue and refresh UI
   readyQueue.push(job);
-  refreshReadyQueueUI();
-  // Kick off if idle
-  startProcessing();
+  updateReadyList();
+  processNext();
 });
 
-// ─── Core Processing Engine ───────────────────────────────
-function startProcessing() {
-  if (isProcessing || readyQueue.length === 0 || stopRequested) return;
+elems.stopBtn.addEventListener('click', () => {
+  clearInterval(timerInterval);
+  stopped = true;
+  elems.addBtn.disabled = true;
+  elems.stopBtn.disabled = true;
+  renderResults();
+});
 
-  // 1) Select next job index
+function processNext() {
+  if (processing || !readyQueue.length || stopped) return;
+
+  // pick next index based on algo
   let idx = 0;
   if (selectedAlgorithm === 'SJF') {
-    idx = readyQueue.reduce((minIdx, job, i) =>
-      job.burstTime < readyQueue[minIdx].burstTime ? i : minIdx
-    , 0);
-  } else if (selectedAlgorithm === 'Priority') {
-    idx = readyQueue.reduce((minIdx, job, i) =>
-      job.priority < readyQueue[minIdx].priority ? i : minIdx
-    , 0);
+    idx = readyQueue.findIndex(j => j.burstTime === Math.min(...readyQueue.map(x => x.burstTime)));
   }
-  // FCFS leaves idx = 0
+  if (selectedAlgorithm === 'Priority') {
+    idx = readyQueue.findIndex(j => j.priority === Math.min(...readyQueue.map(x => x.priority)));
+  }
 
-  // 2) Dequeue
-  const [job] = readyQueue.splice(idx, 1);
-  isProcessing = true;
+  const job = readyQueue.splice(idx, 1)[0];
+  processing = true;
 
-  // 3) Record start/end for Gantt & stats
-  const startTime      = timer;
-  const completionTime = startTime + job.burstTime;
-  jobLog.push({
-    id:             job.id,
-    burstTime:      job.burstTime,
-    arrivalTime:    job.arrivalTime,
-    startTime,
-    completionTime
-  });
+  const startTime = timer;
+  const finishTime = startTime + job.burstTime;
+  jobLog.push({ ...job, startTime, finishTime });
 
-  // 4) Update Processing UI
-  procListDOM.innerHTML = `<li>${job.id} (BT: ${job.burstTime})</li>`;
-  refreshReadyQueueUI();
+  elems.procList.innerHTML = `<li>${job.id} (BT:${job.burstTime})</li>`;
+  updateReadyList();
 
-  // 5) Simulate the burst
   setTimeout(() => {
-    // Move to Completed
-    procListDOM.innerHTML = '';
-    const doneLi = document.createElement('li');
-    doneLi.textContent = `${job.id} ✅`;
-    compListDOM.appendChild(doneLi);
-
-    isProcessing = false;
-    // Continue with next
-    startProcessing();
+    elems.procList.innerHTML = '';
+    const done = document.createElement('li');
+    done.textContent = `${job.id} ✅`;
+    elems.compList.appendChild(done);
+    processing = false;
+    processNext();
   }, job.burstTime * 1000);
 }
 
-// ─── Refresh Ready Queue UI ───────────────────────────────
-function refreshReadyQueueUI() {
-  readyListDOM.innerHTML = '';
-  let displayQueue = [...readyQueue];
+function updateReadyList() {
+  elems.readyList.innerHTML = '';
+  let list = [...readyQueue];
 
   if (selectedAlgorithm === 'SJF') {
-    displayQueue.sort((a, b) => a.burstTime - b.burstTime);
-  } else if (selectedAlgorithm === 'Priority') {
-    displayQueue.sort((a, b) => a.priority - b.priority);
+    list.sort((a, b) => a.burstTime - b.burstTime);
   }
-  // FCFS = as-is
+  if (selectedAlgorithm === 'Priority') {
+    list.sort((a, b) => a.priority - b.priority);
+  }
 
-  displayQueue.forEach(job => {
+  list.forEach(job => {
     const li = document.createElement('li');
-    li.textContent = `${job.id} (BT: ${job.burstTime}, AT: ${job.arrivalTime})` +
-                     (job.priority != null ? ` [P:${job.priority}]` : '');
-    readyListDOM.appendChild(li);
+    li.textContent = `${job.id} (BT:${job.burstTime}, AT:${job.arrivalTime})`
+                   + (job.priority != null ? ` [P:${job.priority}]` : '');
+    elems.readyList.appendChild(li);
   });
 }
 
-// ─── Stop & Render Gantt + Stats ─────────────────────────
-stopBtn.addEventListener('click', () => {
-  clearInterval(timerInterval);
-  stopRequested = true;
-  addJobBtn.disabled = true;
-  stopBtn.disabled   = true;
-  renderGanttAndStats();
-});
-
-function renderGanttAndStats() {
-  const container = document.getElementById('ganttContainer');
-  const tableBody = document.querySelector('#jobTable tbody');
-
-  // reset
-  container.innerHTML   = '';
-  tableBody.innerHTML   = '';
-  avgTurnDOM.textContent    = '–';
-  avgWaitDOM.textContent    = '–';
-  throughputDOM.textContent = '–';
+function renderResults() {
+  elems.ganttContainer.innerHTML = '';
+  elems.statsBody.innerHTML = '';
+  elems.avgTurn.textContent = '–';
+  elems.avgWait.textContent = '–';
+  elems.throughput.textContent = '–';
 
   const totalTime = timer;
-  const nJobs     = jobLog.length;
-  let sumTurn    = 0;
-  let sumWait    = 0;
+  const count = jobLog.length;
+  let sumTurn = 0, sumWait = 0;
 
   jobLog.forEach(job => {
-    // — Gantt bar —
-    const rowDiv = document.createElement('div');
-    rowDiv.className = 'gantt-row';
+    // Gantt bar
+    const row = document.createElement('div');
+    row.className = 'gantt-row';
 
-    const labelDiv = document.createElement('div');
-    labelDiv.className = 'gantt-label';
-    labelDiv.textContent = job.id;
+    const label = document.createElement('div');
+    label.className = 'gantt-label';
+    label.textContent = job.id;
 
-    const barDiv = document.createElement('div');
-    barDiv.className = 'gantt-bar';
-    const widthPct  = ((job.completionTime - job.startTime) / totalTime) * 100;
-    const offsetPct = (job.startTime / totalTime) * 100;
-    barDiv.style.width      = `${widthPct}%`;
-    barDiv.style.marginLeft = `${offsetPct}%`;
-    // tooltip
-    barDiv.title = `Start: ${job.startTime}s\nEnd: ${job.completionTime}s`;
+    const bar = document.createElement('div');
+    bar.className = 'gantt-bar';
+    const w = ((job.finishTime - job.startTime) / totalTime) * 100;
+    const o = (job.startTime / totalTime) * 100;
+    bar.style.width = `${w}%`;
+    bar.style.marginLeft = `${o}%`;
+    bar.title = `Start: ${job.startTime}s\nEnd: ${job.finishTime}s`;
 
-    rowDiv.appendChild(labelDiv);
-    rowDiv.appendChild(barDiv);
-    container.appendChild(rowDiv);
+    row.append(label, bar);
+    elems.ganttContainer.appendChild(row);
 
-    // — Stats table row —
-    const tr           = document.createElement('tr');
-    const turnaround   = job.completionTime - job.arrivalTime;
-    const waiting      = turnaround - job.burstTime;
+    // Stats table
+    const tr = document.createElement('tr');
+    const turnaround = job.finishTime - job.arrivalTime;
+    const waiting = turnaround - job.burstTime;
     sumTurn += turnaround;
     sumWait += waiting;
 
-    [
-      job.id,
-      job.burstTime,
-      job.arrivalTime,
-      job.startTime,
-      job.completionTime,
-      turnaround,
-      waiting
-    ].forEach(val => {
+    [job.id, job.burstTime, job.arrivalTime, job.startTime,
+     job.finishTime, turnaround, waiting].forEach(val => {
       const td = document.createElement('td');
       td.textContent = val;
       tr.appendChild(td);
     });
-
-    tableBody.appendChild(tr);
+    elems.statsBody.appendChild(tr);
   });
 
-  // — Summary metrics —
-  if (nJobs > 0) {
-    avgTurnDOM.textContent    = (sumTurn / nJobs).toFixed(2);
-    avgWaitDOM.textContent    = (sumWait / nJobs).toFixed(2);
-    throughputDOM.textContent = (nJobs / totalTime).toFixed(3);
+  if (count) {
+    elems.avgTurn.textContent = (sumTurn / count).toFixed(2);
+    elems.avgWait.textContent = (sumWait / count).toFixed(2);
+    elems.throughput.textContent = (count / timer).toFixed(3);
   }
 
-  document.querySelector('.gantt-section').style.display = 'block';
+  elems.ganttSection.style.display = 'block';
 }
