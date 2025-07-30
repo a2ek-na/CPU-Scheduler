@@ -218,3 +218,41 @@ button:hover:not(:disabled) {
   margin: 0.5rem 0;
   font-size: 0.95rem;
 }
+
+
+/* Quantum Input Styles */
+
+#timeQuantumInput {
+  -moz-appearance: textfield;       /* Firefox */
+  -webkit-appearance: none;         /* Safari & Chrome */
+  appearance: none;
+  position: relative;
+  padding-right: 2.5em;             /* room for our custom arrows */
+}
+#timeQuantumInput {
+  /* match select/button background */
+  padding: 10px 15px;
+  font-size: 1rem;
+  border-radius: 10px;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+  outline: none;
+  border: none;
+  background-color: #1a1a1a;
+  color: #00e1ff;
+  box-shadow: 0 0 10px #00f0ff33;
+  transition: 0.2s ease-in-out;
+}
+
+#timeQuantumInput:disabled {
+  background-color: #333;
+  color: #666;
+  box-shadow: none;
+}
+
+#timeQuantumInput:hover:not(:disabled) {
+  background-color: #00e1ff;
+  color: #0f0f0f;
+  box-shadow: 0 0 20px #00f0ffaa;
+  cursor: pointer;
+}
